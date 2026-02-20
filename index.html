@@ -106,20 +106,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .section-header h3 { font-family: Arial, sans-serif; font-size:1rem; color:var(--text); font-weight:bold; }
 .section-credits { margin-left:auto; font-size:0.73rem; color:var(--muted); }
 .optional-note { font-size:0.75rem; color:var(--muted); font-style:italic; margin-bottom:8px; padding-left:4px; }
-
-/* Nuevo diseño de las píldoras de información para máximo contraste */
-.info-pill { 
-  display:inline-block; 
-  background:var(--uc-dark); 
-  color:#ffffff; 
-  font-size:0.75rem; 
-  padding:8px 14px; 
-  border-radius:8px; 
-  margin-bottom:12px; 
-  font-weight: bold; 
-  box-shadow: 0 3px 6px rgba(0,0,0,0.15); 
-  letter-spacing: 0.3px;
-}
+.info-pill { display:inline-block; background:var(--uc-dark); color:#ffffff; font-size:0.75rem; padding:8px 14px; border-radius:8px; margin-bottom:12px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.15); letter-spacing: 0.3px; }
 
 .course-row {
   display:grid; grid-template-columns:1fr 100px 90px 30px;
@@ -234,11 +221,10 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
       <p>Malla antigua y nueva</p>
       <span class="badge-soon">Próximamente</span>
     </div>
-    <div class="career-card disabled">
+    <div class="career-card" onclick="selectCareer('bq')">
       <div class="career-icon">⚗️</div>
       <h3>Bioquímica</h3>
       <p>Malla completa</p>
-      <span class="badge-soon">Próximamente</span>
     </div>
   </div>
 </div>
@@ -247,7 +233,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
   <div class="calc-header">
     <button class="back-btn" onclick="goBack()">←</button>
     <div class="calc-header-info">
-      <h2>Biología — Malla Antigua</h2>
+      <h2 id="calc-header-title">Biología — Malla Antigua</h2>
       <p>Ingresa tus notas · los ramos reprobados también cuentan en el PPA general.</p>
     </div>
   </div>
@@ -325,74 +311,135 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 
 <script>
 // ════════════════════════════════════════
-// MALLA BIOLOGÍA ANTIGUA
+// MALLAS DE CARRERAS
 // ════════════════════════════════════════
-const MALLA = [
-  { year:'Primer Año', sems:[
-    { num:1, label:'1er Semestre', cursos:[
-      { code:'BIO101A', name:'Tópicos de Biología',        crd:5  },
-      { code:'BIO141C', name:'Biología de la Célula',       crd:10 },
-      { code:'QIM101L', name:'Lab. Química General',        crd:10 },
-      { code:'QIM100I', name:'Química General I',           crd:10 },
-      { code:'MAT1000', name:'Pre-Cálculo',                 crd:10 },
-      { code:'FIL2001', name:'Filosofía: ¿Para qué?',       crd:10 }
+const MALLAS = {
+  bio: [
+    { year:'Primer Año', sems:[
+      { num:1, label:'1er Semestre', cursos:[
+        { code:'BIO101A', name:'Tópicos de Biología',        crd:5  },
+        { code:'BIO141C', name:'Biología de la Célula',       crd:10 },
+        { code:'QIM101L', name:'Lab. Química General',        crd:10 },
+        { code:'QIM100I', name:'Química General I',           crd:10 },
+        { code:'MAT1000', name:'Pre-Cálculo',                 crd:10 },
+        { code:'FIL2001', name:'Filosofía: ¿Para qué?',       crd:10 }
+      ]},
+      { num:2, label:'2do Semestre', cursos:[
+        { code:'BIO110C', name:'Biología de Organismos y Comunidades', crd:10 },
+        { code:'FIS109C', name:'Física para Ciencias',                 crd:10 },
+        { code:'FIS0109', name:'Lab. Física para Ciencias',             crd:5  },
+        { code:'QIM100B', name:'Química General II',                   crd:10 },
+        { code:'MAT1100', name:'Cálculo I',                             crd:10 },
+      ]},
     ]},
-    { num:2, label:'2do Semestre', cursos:[
-      { code:'BIO110C', name:'Biología de Organismos y Comunidades', crd:10 },
-      { code:'FIS109C', name:'Física para Ciencias',                 crd:10 },
-      { code:'FIS0109', name:'Lab. Física para Ciencias',             crd:5  },
-      { code:'QIM100B', name:'Química General II',                   crd:10 },
-      { code:'MAT1100', name:'Cálculo I',                             crd:10 },
+    { year:'Segundo Año', sems:[
+      { num:3, label:'3er Semestre', cursos:[
+        { code:'BIO152C',  name:'Bases Físicas de los Procesos Biológicos', crd:10 },
+        { code:'BIO242C',  name:'Bioestadística',                            crd:10 },
+        { code:'QIM200',   name:'Química Orgánica Fundamental',              crd:10 },
+      ]},
+      { num:4, label:'4to Semestre', cursos:[
+        { code:'BIO151E',  name:'Biología de los Microorganismos', crd:10 },
+        { code:'QIM150',   name:'Química-Física',                  crd:10 },
+      ]},
     ]},
-  ]},
-  { year:'Segundo Año', sems:[
-    { num:3, label:'3er Semestre', cursos:[
-      { code:'BIO152C',  name:'Bases Físicas de los Procesos Biológicos', crd:10 },
-      { code:'BIO242C',  name:'Bioestadística',                            crd:10 },
-      { code:'QIM200',   name:'Química Orgánica Fundamental',              crd:10 },
+    { year:'Tercer Año', sems:[
+      { num:5, label:'5to Semestre',
+        optionalNote:'Elige UNA opción: BIO225C (Fisiología y Bioquímica Vegetal) o BIO274E (Biología y Fisiología Celular)',
+        cursos:[
+          { code:'BIO226E', name:'Genética y Evolución',               crd:10 },
+          { code:'BIO228C', name:'Bioquímica y Genética Molecular',    crd:10 },
+          { code:'BIO297C', name:'Lab. Bioquímica y Biología Celular', crd:10 },
+          { code:'BIO225C', name:'Fisiología y Bioquímica Vegetal',    crd:10, optional:true },
+          { code:'BIO274E', name:'Biología y Fisiología Celular',      crd:10, optional:true },
+      ]},
+      { num:6, label:'6to Semestre', cursos:[
+        { code:'BIO231C', name:'Ecología',                          crd:10 },
+        { code:'BIO298E', name:'Trabajo Experimental en Ecología',  crd:5  },
+        { code:'BIO219E', name:'Biología y Diversidad Vegetal',     crd:10 },
+        { code:'BIO227E', name:'Biología y Diversidad Animal',      crd:10 },
+        { code:'BIO299E', name:'Fisiología',                        crd:10 },
+        { code:'BIO299L', name:'Laboratorio de Fisiología',         crd:5  },
+      ]},
     ]},
-    { num:4, label:'4to Semestre', cursos:[
-      { code:'BIO151E',  name:'Biología de los Microorganismos', crd:10 },
-      { code:'QIM150',   name:'Química-Física',                  crd:10 },
+    { year:'Cuarto Año — Licenciatura', sems:[
+      { num:7, label:'7mo Semestre',
+        note:'OPR Experiencia de Investigación (BIO295A, 15 crd) + OPR adicionales opcionales',
+        cursos:[
+          { code:'BIO295A', name:'OPR Experiencia de Investigación', crd:15 },
+      ]},
+      { num:8, label:'8vo Semestre',
+        note:'Actividad de finalización (30 crd): Seminario de Investigación, equivalencia por 3 OPR, o Práctica Profesional',
+        cursos:[
+          { code:'BIO296C', name:'Seminario de Investigación / equivalencia / Práctica', crd:30 },
+      ]},
     ]},
-  ]},
-  { year:'Tercer Año', sems:[
-    { num:5, label:'5to Semestre',
-      optionalNote:'Elige UNA opción: BIO225C (Fisiología y Bioquímica Vegetal) o BIO274E (Biología y Fisiología Celular)',
-      cursos:[
-        { code:'BIO226E', name:'Genética y Evolución',               crd:10 },
-        { code:'BIO228C', name:'Bioquímica y Genética Molecular',    crd:10 },
-        { code:'BIO297C', name:'Lab. Bioquímica y Biología Celular', crd:10 },
-        { code:'BIO225C', name:'Fisiología y Bioquímica Vegetal',    crd:10, optional:true },
-        { code:'BIO274E', name:'Biología y Fisiología Celular',      crd:10, optional:true },
+  ],
+  bq: [
+    { year:'Primer Año', sems:[
+      { num:1, label:'1er Semestre', cursos:[
+        { code:'BIO101B', name:'Tópicos de Bioquímica', crd:5 },
+        { code:'FIS109C', name:'Física para Ciencias', crd:10 },
+        { code:'QIM1001', name:'Química General I', crd:10 },
+        { code:'MAT1000', name:'Pre-Cálculo', crd:10 }
+      ]},
+      { num:2, label:'2do Semestre', cursos:[
+        { code:'BIO141C', name:'Biología de la Célula', crd:10 },
+        { code:'FIS109L', name:'Laboratorio Física para Ciencias', crd:5 },
+        { code:'QIM101L', name:'Lab. Química General', crd:5 },
+        { code:'QIM100B', name:'Química General II', crd:10 },
+        { code:'MAT1100', name:'Cálculo', crd:10 }
+      ]}
     ]},
-    { num:6, label:'6to Semestre', cursos:[
-      { code:'BIO231C', name:'Ecología',                          crd:10 },
-      { code:'BIO298E', name:'Trabajo Experimental en Ecología',  crd:5  },
-      { code:'BIO219E', name:'Biología y Diversidad Vegetal',     crd:10 },
-      { code:'BIO227E', name:'Biología y Diversidad Animal',      crd:10 },
-      { code:'BIO299E', name:'Fisiología',                        crd:10 },
-      { code:'BIO299L', name:'Laboratorio de Fisiología',         crd:5  },
+    { year:'Segundo Año', sems:[
+      { num:3, label:'3er Semestre', cursos:[
+        { code:'BIO152C', name:'Bases Físicas de los Procesos Biológicos', crd:10 },
+        { code:'BIO151E', name:'Biología de los Microorganismos', crd:10 },
+        { code:'BIO242C', name:'Bioestadística', crd:10 },
+        { code:'QIM102B', name:'Química Orgánica I', crd:10 }
+      ]},
+      { num:4, label:'4to Semestre', cursos:[
+        { code:'BIO226E', name:'Genética y Evolución', crd:10 },
+        { code:'QIM103A', name:'Química Orgánica II', crd:10 },
+        { code:'QIM111', name:'Análisis Instrumental', crd:10 },
+        { code:'QIM109B', name:'Química Analítica I', crd:10 }
+      ]}
     ]},
-  ]},
-  { year:'Cuarto Año — Licenciatura', sems:[
-    { num:7, label:'7mo Semestre',
-      note:'OPR Experiencia de Investigación (BIO295A, 15 crd) + OPR adicionales opcionales',
-      cursos:[
-        { code:'BIO295A', name:'OPR Experiencia de Investigación', crd:15 },
+    { year:'Tercer Año', sems:[
+      { num:5, label:'5to Semestre', cursos:[
+        { code:'BIO288C', name:'Genética Molecular', crd:10 },
+        { code:'BIO225C', name:'Fisiología y Bioquímica Vegetal', crd:10 },
+        { code:'BIO257C', name:'Bioquímica', crd:10 },
+        { code:'BIO266D', name:'Laboratorio Bioquímica I / Biología Celular', crd:10 },
+        { code:'FIL2001', name:'Filosofía: ¿Para qué?', crd:10 }
+      ]},
+      { num:6, label:'6to Semestre', cursos:[
+        { code:'BIO266E', name:'Laboratorio Bioquímica / Genética Molecular', crd:10 },
+        { code:'BIO274C', name:'Biología y Fisiología Celular', crd:10 },
+        { code:'QIM114B', name:'Química Física I', crd:10 },
+        { code:'QIM104A', name:'Laboratorio Química Orgánica', crd:10 }
+      ]}
     ]},
-    { num:8, label:'8vo Semestre',
-      note:'Actividad de finalización (30 crd): Seminario de Investigación, equivalencia por 3 OPR, o Práctica Profesional',
-      cursos:[
-        { code:'BIO296C', name:'Seminario de Investigación / equivalencia / Práctica', crd:30 },
-    ]},
-  ]},
-];
+    { year:'Cuarto Año', sems:[
+      { num:7, label:'7mo Semestre', cursos:[
+        { code:'QIM115', name:'Química Física II', crd:10 },
+        { code:'BIO299E', name:'Fisiología', crd:10 },
+        { code:'BIO295A', name:'OPR Experiencia de Investigación', crd:15 }
+      ]},
+      { num:8, label:'8vo Semestre', cursos:[
+        { code:'BIO296F', name:'Seminario de Investigación', crd:30 },
+        { code:'MEB176B', name:'Laboratorio Clínico', crd:10 },
+        { code:'BIO299L', name:'Laboratorio de Fisiología', crd:5 }
+      ]}
+    ]}
+  ]
+};
 
 // ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
 let currentCareer = null;
+let MALLA = [];
 let grades   = {}; 
 let examGrado = null;
 let efgExtra  = [];
@@ -405,6 +452,15 @@ const EFG_AREAS = ['Teológico','Humanidades','Artes','Salud y Bienestar','Cs. S
 
 function selectCareer(id) {
   currentCareer = id;
+  MALLA = MALLAS[id];
+  
+  const headerTitle = document.getElementById('calc-header-title');
+  if (id === 'bio') {
+    headerTitle.textContent = 'Biología — Malla Antigua';
+  } else if (id === 'bq') {
+    headerTitle.textContent = 'Bioquímica — Malla Completa';
+  }
+
   grades    = JSON.parse(localStorage.getItem('ppa4-g-'+id) || '{}');
   examGrado = grades.__exam__ !== undefined ? grades.__exam__ : null;
   efgExtra  = JSON.parse(localStorage.getItem('ppa4-efg-'+id) || '[]');
@@ -545,10 +601,13 @@ function buildFinalSection() {
 
   box.innerHTML = `<h3>📊 Electivos, Examen de Grado y Notas Finales</h3>`;
 
+  const ofgReq = currentCareer === 'bio' ? 70 : 60;
+  const oprReq = currentCareer === 'bio' ? 20 : 15;
+
   // OFG
   const efgB = document.createElement('div');
   efgB.className = 'elective-block';
-  efgB.innerHTML = '<h4>OFG — Optativos de Formación General (70 créditos requeridos)</h4>';
+  efgB.innerHTML = `<h4>OFG — Optativos de Formación General (${ofgReq} créditos requeridos)</h4>`;
   efgB.id = 'efg-block';
   efgExtra.forEach(r => efgB.appendChild(makeEFGRow(r)));
   const addEFG = document.createElement('button');
@@ -565,7 +624,7 @@ function buildFinalSection() {
   // OPR
   const oprB = document.createElement('div');
   oprB.className = 'elective-block';
-  oprB.innerHTML = '<h4>OPR (Optativo de profundización)</h4>';
+  oprB.innerHTML = `<h4>OPR (Optativo de profundización) — ${oprReq} créditos requeridos</h4>`;
   oprB.id = 'opr-block';
   oprLic.forEach(r => oprB.appendChild(makeOPRRow(r)));
   const addOPR = document.createElement('button');
