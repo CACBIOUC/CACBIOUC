@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora PPA — FCB UC</title>
+<title>Calculadora PPA — CABIOUC</title>
 <style>
 :root {
   --uc: #95cdcf;
@@ -209,11 +209,10 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
       <h3>Biología</h3>
       <p>Malla antigua (hasta admisión 2021)</p>
     </div>
-    <div class="career-card disabled">
+    <div class="career-card" onclick="selectCareer('bio_new')">
       <div class="career-icon">🧬</div>
       <h3>Biología</h3>
       <p>Malla nueva (admisión 2022+)</p>
-      <span class="badge-soon">Próximamente</span>
     </div>
     <div class="career-card disabled">
       <div class="career-icon">🌊</div>
@@ -233,7 +232,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
   <div class="calc-header">
     <button class="back-btn" onclick="goBack()">←</button>
     <div class="calc-header-info">
-      <h2 id="calc-header-title">Biología — Malla Antigua</h2>
+      <h2 id="calc-header-title">Cargando...</h2>
       <p>Ingresa tus notas · los ramos reprobados también cuentan en el PPA general.</p>
     </div>
   </div>
@@ -432,6 +431,73 @@ const MALLAS = {
         { code:'BIO299L', name:'Laboratorio de Fisiología', crd:5 }
       ]}
     ]}
+  ],
+  bio_new: [
+    { year: 'Primer Año', sems: [
+      { num: 1, label: '1er Semestre', cursos: [
+        { code: 'BIO118C', name: 'Evolución', crd: 10 },
+        { code: 'BIO114B', name: 'Biología de la Célula', crd: 10 },
+        { code: 'MAT1000', name: 'Precálculo', crd: 10 },
+        { code: 'QIM1001', name: 'Química General', crd: 10 },
+        { code: 'BIO105C', name: 'Desafíos de las Ciencias Biológicas', crd: 5 },
+        { code: 'VRA100C', name: 'Español', crd: 0, noGrade: true },
+        { code: 'VRA2000', name: 'English Test', crd: 0, noGrade: true },
+        { code: 'VRA4000', name: 'Integridad Académica en la UC', crd: 0, noGrade: true }
+      ]},
+      { num: 2, label: '2do Semestre', cursos: [
+        { code: 'BIO120C', name: 'Biología y Diversidad Vegetal', crd: 10 },
+        { code: 'FIS109C', name: 'Física para Ciencias', crd: 10 },
+        { code: 'MAT1100', name: 'Cálculo I', crd: 10 },
+        { code: 'QIM100B', name: 'Química General II', crd: 10 },
+        { code: 'FIS0109', name: 'Laboratorio Física para Ciencias', crd: 0, noGrade: true }
+      ]}
+    ]},
+    { year: 'Segundo Año', sems: [
+      { num: 3, label: '3er Semestre', cursos: [
+        { code: 'BIO227E', name: 'Biología y Diversidad Animal', crd: 10 },
+        { code: 'BIO230C', name: 'Bioestadística', crd: 10 },
+        { code: 'QIM200', name: 'Química Orgánica Fundamental', crd: 10 },
+        { code: 'BIO210C', name: 'Tópicos / Habilidades', crd: 5 },
+        { code: 'BIO215C', name: 'Metodología para la Inv. Biológica', crd: 5 },
+        { code: 'FIL2001', name: 'Filosofía ¿Para qué?', crd: 10 }
+      ]},
+      { num: 4, label: '4to Semestre', cursos: [
+        { code: 'BIO247C', name: 'Biología de Microorganismos', crd: 10 },
+        { code: 'BIO235C', name: 'Biología Computacional', crd: 10 },
+        { code: 'BIO244C', name: 'Bioquímica', crd: 10 }
+      ]}
+    ]},
+    { year: 'Tercer Año', sems: [
+      { num: 5, label: '5to Semestre', cursos: [
+        { code: 'BIO330C', name: 'Ecología', crd: 10 },
+        { code: 'BIO356C', name: 'Genética Integrativa', crd: 10 },
+        { code: 'BIO324C', name: 'Biología del Desarrollo', crd: 10 },
+        { code: 'BIO310C', name: 'Biomatemática / Modelación de Sist.', crd: 10 },
+        { code: 'ETI201C', name: 'Filosofía y Ética de la Ciencia', crd: 5 }
+      ]},
+      { num: 6, label: '6to Semestre', cursos: [
+        { code: 'BIO385C', name: 'Fisiología Celular', crd: 10 },
+        { code: 'BIO372C', name: 'Fisiología Animal / Vegetal', crd: 10 },
+        { code: 'BIO408C', name: 'Ecoinformática / Bioinformática', crd: 10 },
+        { code: 'BIO390C', name: 'Fisiología de Sistemas', crd: 10 }
+      ]}
+    ]},
+    { year: 'Cuarto Año', sems: [
+      { num: 7, label: '7mo Semestre', cursos: [
+        { code: 'BIO415C', name: 'Trabajo Experimental en Biología', crd: 10 }
+      ]},
+      { num: 8, label: '8vo Semestre', cursos: [
+        { code: 'BIO416C', name: 'Seminario de Investigación I', crd: 25 }
+      ]}
+    ]},
+    { year: 'Quinto Año — Título Profesional', sems: [
+      { num: 9, label: '9no Semestre', note: 'Opción A, B o C (Seminario II, CAE, o Práctica Inmersiva)', cursos: [
+        { code: 'BIO4XX', name: 'Actividad de Titulación (Opción)', crd: 30 }
+      ]},
+      { num: 10, label: '10mo Semestre', cursos: [
+        { code: 'BIO480C', name: 'Memoria Profesional / Investigación', crd: 50 }
+      ]}
+    ]}
   ]
 };
 
@@ -440,6 +506,8 @@ const MALLAS = {
 // ════════════════════════════════════════
 let currentCareer = null;
 let MALLA = [];
+let ofgReq = 70;
+let oprReq = 20;
 let grades   = {}; 
 let examGrado = null;
 let efgExtra  = [];
@@ -456,9 +524,17 @@ function selectCareer(id) {
   
   const headerTitle = document.getElementById('calc-header-title');
   if (id === 'bio') {
-    headerTitle.textContent = 'Biología — Malla Antigua';
+    headerTitle.textContent = 'Biología — Malla Antigua (hasta 2021)';
+    ofgReq = 70;
+    oprReq = 20;
   } else if (id === 'bq') {
     headerTitle.textContent = 'Bioquímica — Malla Completa';
+    ofgReq = 60;
+    oprReq = 15;
+  } else if (id === 'bio_new') {
+    headerTitle.textContent = 'Biología — Malla Nueva (Admisión 2022+)';
+    ofgReq = 60; 
+    oprReq = 60;
   }
 
   grades    = JSON.parse(localStorage.getItem('ppa4-g-'+id) || '{}');
@@ -600,9 +676,6 @@ function buildFinalSection() {
   box.id = 'final-section';
 
   box.innerHTML = `<h3>📊 Electivos, Examen de Grado y Notas Finales</h3>`;
-
-  const ofgReq = currentCareer === 'bio' ? 70 : 60;
-  const oprReq = currentCareer === 'bio' ? 20 : 15;
 
   // OFG
   const efgB = document.createElement('div');
