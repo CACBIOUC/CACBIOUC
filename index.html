@@ -357,7 +357,7 @@ function renderCalc() {
       sec.innerHTML = `<div class="section-header"><div class="section-num">${sem.num}</div><h3>${sem.label}</h3><span class="section-credits">${crdTotal} créditos</span></div>`;
       if (sem.optionalNote) { const d=document.createElement('div'); d.className='optional-note'; d.textContent='* '+sem.optionalNote; sec.appendChild(d); }
       if (sem.note)         { const d=document.createElement('div'); d.className='info-pill'; d.textContent='📌 '+sem.note; sec.appendChild(d); }
-      sem.cursos.forEach(curso => sec.appendChild(makeCourseRow(curso)));
+      sem.cursos.forEach(curso => sec.appendChild(makeCourseBlock(curso)));
       c.appendChild(sec);
     });
   });
@@ -370,7 +370,10 @@ function renderCalc() {
   recalc();
 }
 
-function makeCourseRow(curso) {
+// grades[code] = array de notas (un elemento por intento)
+// Todas las notas cuentan en el PPA; aparece nueva fila automáticamente al reprobar
+
+function makeCourseBlock(curso) {
   if (curso.noGrade) {
     const d = document.createElement('div');
     d.className = 'no-grade-row';
@@ -378,38 +381,82 @@ function makeCourseRow(curso) {
     return d;
   }
 
-  const g = grades[curso.code] || {};
-  const nota   = g.nota !== undefined ? g.nota : '';
-  const repite = !!g.repite;
-  const n = parseFloat(nota);
-  const hasN   = nota!=='' && !isNaN(n) && n>=1 && n<=7;
-  const aprobado = hasN && n >= 4.0;
+  const wrap = document.createElement('div');
+  wrap.id = 'block-' + curso.code;
+  wrap.style.marginBottom = '6px';
 
-  let rowClass = 'course-row';
-  if (repite)        rowClass += ' retrying';
-  else if (hasN)     rowClass += aprobado ? ' graded' : ' failed';
+  // Migración: si tenía formato viejo {nota, repite}, convertir a array
+  if (!Array.isArray(grades[curso.code])) {
+    const old = grades[curso.code];
+    grades[curso.code] = (old && old.nota !== undefined && old.nota !== '') ? [old.nota] : [''];
+  }
 
-  let statusText = repite ? '🔄 Repitiendo' : (hasN ? (aprobado ? '✓ Aprobado' : '✗ Reprobado') : '—');
   const optTag = curso.optional ? ' <span style="color:var(--gold);font-size:0.65rem;font-weight:700;">OPT</span>' : '';
 
-  const div = document.createElement('div');
-  div.className = rowClass;
-  div.id = 'row-' + curso.code;
-  div.innerHTML = `
-    <div class="course-info">
-      <div class="course-code">${curso.code}${optTag}</div>
-      <div class="course-name" title="${curso.name}">${curso.name}</div>
-      <div class="course-crd">${curso.crd} créditos${curso.isEFG?' · EFG':''}</div>
-    </div>
-    <input class="grade-input ${hasN?(aprobado?'valid':'invalid'):''}" type="number"
-      min="1" max="7" step="0.1" placeholder="Nota" value="${nota}"
-      oninput="setGrade('${curso.code}',this.value,this)" />
-    <label class="repite-toggle" title="Marca si reprobaste y estás dando el ramo de nuevo">
-      <input type="checkbox" ${repite?'checked':''} onchange="setRepite('${curso.code}',this.checked)" /> Repite
-    </label>
-    <div class="course-status" id="status-${curso.code}">${statusText}</div>
-  `;
-  return div;
+  function rebuildRows() {
+    wrap.innerHTML = '';
+    const atts = grades[curso.code];
+
+    atts.forEach((nota, idx) => {
+      const n = parseFloat(nota);
+      const hasN = nota !== '' && !isNaN(n) && n >= 1 && n <= 7;
+      const aprobado = hasN && n >= 4.0;
+      const isRetry = idx > 0;
+
+      let rowClass = 'course-row';
+      if (hasN) rowClass += aprobado ? ' graded' : ' failed';
+
+      const intentoBadge = isRetry
+        ? `<span style="display:inline-block;background:var(--orange);color:white;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:4px;">Intento ${idx+1}</span>`
+        : '';
+
+      const row = document.createElement('div');
+      row.className = rowClass;
+      row.id = 'row-' + curso.code + '-' + idx;
+      row.innerHTML = `
+        <div class="course-info">
+          <div class="course-code">${curso.code}${optTag} ${intentoBadge}</div>
+          <div class="course-name" title="${curso.name}">${curso.name}</div>
+          <div class="course-crd">${curso.crd} créditos</div>
+        </div>
+        <input class="grade-input ${hasN?(aprobado?'valid':'invalid'):''}" type="number"
+          min="1" max="7" step="0.1" placeholder="Nota" value="${nota}"
+          oninput="setAttemptGrade('${curso.code}', ${idx}, this)" />
+        <div style="width:90px"></div>
+        <div class="course-status" id="status-${curso.code}-${idx}">
+          ${hasN ? (aprobado ? '✓ Aprobado' : '✗ Reprobado') : '—'}
+        </div>
+      `;
+      wrap.appendChild(row);
+    });
+
+    // Si el último intento fue reprobado, mostrar fila nueva automáticamente
+    const lastNota = parseFloat(atts[atts.length - 1]);
+    const lastHasN = !isNaN(lastNota) && lastNota >= 1 && lastNota <= 7;
+    const approvedAlready = atts.some(n => parseFloat(n) >= 4.0);
+
+    if (lastHasN && !approvedAlready) {
+      const retryRow = document.createElement('div');
+      retryRow.className = 'course-row retrying';
+      retryRow.style.borderStyle = 'dashed';
+      retryRow.innerHTML = `
+        <div class="course-info">
+          <div class="course-code">${curso.code} <span style="background:var(--orange);color:white;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;">Intento ${atts.length+1}</span></div>
+          <div class="course-name">${curso.name}</div>
+          <div class="course-crd">${curso.crd} créditos · nueva inscripción</div>
+        </div>
+        <input class="grade-input" type="number" min="1" max="7" step="0.1" placeholder="Nueva nota"
+          oninput="addAttempt('${curso.code}', this)" />
+        <div style="width:90px"></div>
+        <div class="course-status" style="color:var(--orange);font-weight:600;">🔄 Repitiendo</div>
+      `;
+      wrap.appendChild(retryRow);
+    }
+  }
+
+  rebuildRows();
+  wrap._rebuild = rebuildRows;
+  return wrap;
 }
 
 function buildFinalSection() {
@@ -518,36 +565,52 @@ function makeOPRRow(r) {
 }
 
 // ════════════════════════════════════════
-// SETTERS
+// SETTERS — sistema de intentos
 // ════════════════════════════════════════
-function setGrade(code, val, input) {
-  if (!grades[code]) grades[code]={};
-  grades[code].nota = val; saveGrades();
-  const n=parseFloat(val), row=document.getElementById('row-'+code), st=document.getElementById('status-'+code);
-  if(!row||!st) return;
-  const repite=grades[code].repite;
-  input.classList.remove('valid','invalid');
-  row.classList.remove('graded','failed');
-  if(repite) row.classList.add('retrying');
-  if(val===''||isNaN(n)){ st.textContent=repite?'🔄 Repitiendo':'—'; }
-  else if(n>=1&&n<=7){
-    const ok=n>=4;
-    input.classList.add(ok?'valid':'invalid');
-    if(!repite) row.classList.add(ok?'graded':'failed');
-    st.textContent=repite?'🔄 Repitiendo':(ok?'✓ Aprobado':'✗ Reprobado');
+function setAttemptGrade(code, idx, input) {
+  if (!Array.isArray(grades[code])) grades[code] = [''];
+  grades[code][idx] = input.value;
+  saveGrades();
+
+  const n = parseFloat(input.value);
+  const hasN = input.value !== '' && !isNaN(n) && n >= 1 && n <= 7;
+  const aprobado = hasN && n >= 4.0;
+
+  // Actualizar visual del input
+  input.classList.remove('valid', 'invalid');
+  if (hasN) input.classList.add(aprobado ? 'valid' : 'invalid');
+
+  // Actualizar row class
+  const row = document.getElementById('row-' + code + '-' + idx);
+  if (row) {
+    row.classList.remove('graded', 'failed');
+    if (hasN) row.classList.add(aprobado ? 'graded' : 'failed');
   }
+
+  // Actualizar status
+  const st = document.getElementById('status-' + code + '-' + idx);
+  if (st) st.textContent = !hasN ? '—' : (aprobado ? '✓ Aprobado' : '✗ Reprobado');
+
+  // Reconstruir el bloque (para mostrar/ocultar fila de nuevo intento)
+  const block = document.getElementById('block-' + code);
+  if (block && block._rebuild) block._rebuild();
+
   recalc();
 }
 
-function setRepite(code, checked) {
-  if(!grades[code]) grades[code]={};
-  grades[code].repite=checked; saveGrades();
-  const row=document.getElementById('row-'+code), st=document.getElementById('status-'+code);
-  if(!row||!st) return;
-  row.classList.remove('graded','failed','retrying');
-  const n=parseFloat(grades[code].nota), hasN=!isNaN(n)&&n>=1&&n<=7;
-  if(checked){ row.classList.add('retrying'); st.textContent='🔄 Repitiendo'; }
-  else { if(hasN){row.classList.add(n>=4?'graded':'failed'); st.textContent=n>=4?'✓ Aprobado':'✗ Reprobado';} else st.textContent='—'; }
+function addAttempt(code, input) {
+  if (!Array.isArray(grades[code])) grades[code] = [];
+  const val = input.value;
+  // Solo guardar si hay algo escrito
+  if (val === '') return;
+
+  // Reemplazar el array con el nuevo intento agregado
+  grades[code].push(val);
+  saveGrades();
+
+  const block = document.getElementById('block-' + code);
+  if (block && block._rebuild) block._rebuild();
+
   recalc();
 }
 
@@ -564,10 +627,13 @@ function recalc() {
 
   MALLA.forEach(yr=>yr.sems.forEach(sem=>sem.cursos.forEach(c=>{
     if(c.noGrade) return;
-    const g=grades[c.code]||{}, n=parseFloat(g.nota);
-    if(isNaN(n)||n<1||n>7) return;
-    sumP+=n*c.crd; sumC+=c.crd;
-    n>=4?apr++:rep++;
+    const atts = Array.isArray(grades[c.code]) ? grades[c.code] : [];
+    atts.forEach(nota => {
+      const n = parseFloat(nota);
+      if(isNaN(n)||n<1||n>7) return;
+      sumP+=n*c.crd; sumC+=c.crd;
+      n>=4?apr++:rep++;
+    });
   })));
 
   efgExtra.forEach(r=>{
