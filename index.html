@@ -7,8 +7,8 @@
 <style>
 :root {
   --uc: #95cdcf;
-  --uc-dark: #0033A0; /* Azul oscuro para contrastes fuertes */
-  --gold: #FFB800; /* Amarillo/Dorado mucho más brillante */
+  --uc-dark: #0033A0;
+  --gold: #FFB800;
   --bg: #f0ede8;
   --text: #1a1a2e;
   --muted: #7a7a8a;
@@ -548,7 +548,7 @@ function buildFinalSection() {
   // OFG
   const efgB = document.createElement('div');
   efgB.className = 'elective-block';
-  efgB.innerHTML = '<h4>OFG — Optativos de Formación General (60 créditos requeridos)</h4>';
+  efgB.innerHTML = '<h4>OFG — Optativos de Formación General (70 créditos requeridos)</h4>';
   efgB.id = 'efg-block';
   efgExtra.forEach(r => efgB.appendChild(makeEFGRow(r)));
   const addEFG = document.createElement('button');
@@ -565,7 +565,7 @@ function buildFinalSection() {
   // OPR
   const oprB = document.createElement('div');
   oprB.className = 'elective-block';
-  oprB.innerHTML = '<h4>OPR Licenciatura (20 crd requeridos) y OPR adicionales del 7mo semestre</h4>';
+  oprB.innerHTML = '<h4>OPR (Optativo de profundización)</h4>';
   oprB.id = 'opr-block';
   oprLic.forEach(r => oprB.appendChild(makeOPRRow(r)));
   const addOPR = document.createElement('button');
