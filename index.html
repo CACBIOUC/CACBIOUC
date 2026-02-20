@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculadora PPA — CABIOUC</title>
 <link rel="icon" type="image/png" href="https://i.ibb.co/JjN0BKLC/Whats-App-Image-2025-12-10-at-21-40-35.jpg">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
 :root {
   --uc: #95cdcf;
@@ -71,7 +72,6 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .career-card.disabled:hover { transform:none; border-color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.2); }
 .career-icon { font-size:2.5rem; margin-bottom:12px; }
 .career-card h3 { font-family: Arial, sans-serif; color:white; font-size:1.1rem; margin-bottom:6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
-.badge-soon { display:inline-block; background:var(--gold); color:var(--text); font-size:0.65rem; font-weight:bold; padding:3px 10px; border-radius:20px; margin-top:8px; text-transform:uppercase; }
 
 /* CALC SCREEN */
 #screen-calc { display:none; min-height:100vh; }
@@ -96,6 +96,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .stat-divider { width:1px; height:36px; background:rgba(255,255,255,0.3); }
 .stat-item .val { font-family: Arial, sans-serif; font-size:1.6rem; font-weight:700; color:white; line-height:1; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
 .stat-item .val.red { color:#c0392b; }
+.stat-item .val.prog { color:var(--gold); }
 .stat-item .lbl { font-size:0.68rem; color:rgba(255,255,255,0.9); margin-top:3px; text-transform:uppercase; letter-spacing:0.5px; font-weight:bold; }
 
 /* CONTENT */
@@ -158,6 +159,19 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .reset-btn-main:hover { border-color:var(--red); color:var(--red); }
 .no-grade-row { display:flex; align-items:center; gap:10px; padding:8px 14px; background:var(--no-grade-bg); border-radius:10px; margin-bottom:6px; font-size:0.82rem; color:var(--no-grade-color); }
 
+/* TOAST FELICIDADES */
+#toast-felicidades {
+  visibility: hidden; min-width: 250px; background-color: var(--green); color: #fff;
+  text-align: center; border-radius: 8px; padding: 16px; position: fixed;
+  z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%);
+  font-size: 1.2rem; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  opacity: 0; transition: opacity 0.5s, bottom 0.5s;
+}
+#toast-felicidades.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+/* 5TO AÑO BOX */
+.fifth-year-box { background:var(--uc); color:white; padding:20px; text-align:center; border-radius:12px; margin-top:30px; margin-bottom:10px; font-weight:bold; letter-spacing:1px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+
 /* SIMULATOR STYLES */
 .btn-link { background:none; border:none; color:var(--text); text-decoration:underline; cursor:pointer; padding:0; font-family: Arial, sans-serif; }
 .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; }
@@ -198,6 +212,8 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 </head>
 <body>
 
+<div id="toast-felicidades">🎉 ¡Felicidades!</div>
+
 <div id="screen-career">
   <div class="career-logo">
     <img src="https://i.ibb.co/JjN0BKLC/Whats-App-Image-2025-12-10-at-21-40-35.jpg" alt="Logo CABIOUC" class="main-logo">
@@ -208,23 +224,23 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
   <div class="career-grid">
     <div class="career-card" onclick="selectCareer('bio')">
       <div class="career-icon">🌳</div>
-      <h3>Biologia Malla Antigua</h3>
+      <h3>Biología Malla Antigua</h3>
     </div>
     <div class="career-card" onclick="selectCareer('bio_new')">
       <div class="career-icon">🍃</div>
-      <h3>Biologia Malla nueva</h3>
+      <h3>Biología Malla Nueva</h3>
     </div>
     <div class="career-card" onclick="selectCareer('biomar')">
       <div class="career-icon">🪼</div>
-      <h3>Biologia marina malla antigua</h3>
+      <h3>Biología Marina Malla Antigua</h3>
     </div>
     <div class="career-card" onclick="selectCareer('biomar_new')">
       <div class="career-icon">🐡</div>
-      <h3>Biologia marina malla nueva</h3>
+      <h3>Biología Marina Malla Nueva</h3>
     </div>
     <div class="career-card" onclick="selectCareer('bq')">
       <div class="career-icon">🧬</div>
-      <h3>Bioquimica</h3>
+      <h3>Bioquímica</h3>
     </div>
   </div>
 </div>
@@ -257,6 +273,11 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
     <div class="stat-item">
       <span class="val red" id="stat-rep">0</span>
       <span class="lbl">Reprobados</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="val prog" id="stat-prog">0%</span>
+      <span class="lbl">Avance (410 crd)</span>
     </div>
   </div>
 
@@ -327,7 +348,6 @@ const MALLAS = {
       { num:2, label:'2do Semestre', cursos:[
         { code:'BIO110C', name:'Biología de Organismos y Comunidades', crd:10 },
         { code:'FIS109C', name:'Física para Ciencias',                 crd:10 },
-        { code:'FIS0109', name:'Lab. Física para Ciencias',             crd:5  },
         { code:'QIM100B', name:'Química General II',                   crd:10 },
         { code:'MAT1100', name:'Cálculo I',                             crd:10 },
       ]},
@@ -364,14 +384,11 @@ const MALLAS = {
     ]},
     { year:'Cuarto Año — Licenciatura', sems:[
       { num:7, label:'7mo Semestre',
-        note:'OPR Experiencia de Investigación (BIO295A, 15 crd) + OPR adicionales opcionales',
         cursos:[
-          { code:'BIO295A', name:'OPR Experiencia de Investigación', crd:15 },
       ]},
       { num:8, label:'8vo Semestre',
-        note:'Actividad de finalización (30 crd): Seminario de Investigación, equivalencia por 3 OPR, o Práctica Profesional',
         cursos:[
-          { code:'BIO296C', name:'Seminario de Investigación / equivalencia / Práctica', crd:30 },
+          { code:'BIO296C', name:'Seminario de Investigación / cursos (agregar en lista OPR) / Práctica extramural', crd:30 },
       ]},
     ]},
   ],
@@ -379,57 +396,58 @@ const MALLAS = {
     { year:'Primer Año', sems:[
       { num:1, label:'1er Semestre', cursos:[
         { code:'BIO101B', name:'Tópicos de Bioquímica', crd:5 },
-        { code:'FIS109C', name:'Física para Ciencias', crd:10 },
         { code:'QIM1001', name:'Química General I', crd:10 },
-        { code:'MAT1000', name:'Pre-Cálculo', crd:10 }
+        { code:'MAT1000', name:'Pre-Cálculo', crd:10 },
+        { code:'QIM101L', name:'Lab. Química General', crd:5 },
+        { code:'BIO141C', name:'Biología de la Célula', crd:10 },
+        { code:'FIL2001', name:'Filosofía: ¿Para qué?', crd:10 }
       ]},
       { num:2, label:'2do Semestre', cursos:[
-        { code:'BIO141C', name:'Biología de la Célula', crd:10 },
-        { code:'FIS109L', name:'Laboratorio Física para Ciencias', crd:5 },
-        { code:'QIM101L', name:'Lab. Química General', crd:5 },
         { code:'QIM100B', name:'Química General II', crd:10 },
-        { code:'MAT1100', name:'Cálculo', crd:10 }
+        { code:'MAT1100', name:'Cálculo', crd:10 },
+        { code:'FIS109C', name:'Física para Ciencias', crd:10 }
       ]}
     ]},
     { year:'Segundo Año', sems:[
       { num:3, label:'3er Semestre', cursos:[
         { code:'BIO152C', name:'Bases Físicas de los Procesos Biológicos', crd:10 },
-        { code:'BIO151E', name:'Biología de los Microorganismos', crd:10 },
         { code:'BIO242C', name:'Bioestadística', crd:10 },
-        { code:'QIM102B', name:'Química Orgánica I', crd:10 }
+        { code:'QIM102B', name:'Química Orgánica I', crd:10 },
+        { code:'QIM109B', name:'Química Analítica I', crd:10 }
       ]},
       { num:4, label:'4to Semestre', cursos:[
-        { code:'BIO226E', name:'Genética y Evolución', crd:10 },
         { code:'QIM103A', name:'Química Orgánica II', crd:10 },
         { code:'QIM111', name:'Análisis Instrumental', crd:10 },
-        { code:'QIM109B', name:'Química Analítica I', crd:10 }
+        { code:'BIO151E', name:'Biología de los Microorganismos', crd:10 }
       ]}
     ]},
     { year:'Tercer Año', sems:[
-      { num:5, label:'5to Semestre', cursos:[
-        { code:'BIO288C', name:'Genética Molecular', crd:10 },
-        { code:'BIO225C', name:'Fisiología y Bioquímica Vegetal', crd:10 },
+      { num:5, label:'5to Semestre',
+        optionalNote:'Elige UNA opción: BIO225C (Fisiología y Bioquímica Vegetal) o BIO274C (Biología y Fisiología Celular)', 
+        cursos:[
         { code:'BIO257C', name:'Bioquímica', crd:10 },
         { code:'BIO266D', name:'Laboratorio Bioquímica I / Biología Celular', crd:10 },
-        { code:'FIL2001', name:'Filosofía: ¿Para qué?', crd:10 }
+        { code:'BIO226E', name:'Genética y Evolución', crd:10 },
+        { code:'QIM104A', name:'Laboratorio Química Orgánica', crd:10 },
+        { code:'BIO225C', name:'Fisiología y Bioquímica Vegetal', crd:10, optional:true },
+        { code:'BIO274C', name:'Biología y Fisiología Celular', crd:10, optional:true }
       ]},
       { num:6, label:'6to Semestre', cursos:[
         { code:'BIO266E', name:'Laboratorio Bioquímica / Genética Molecular', crd:10 },
-        { code:'BIO274C', name:'Biología y Fisiología Celular', crd:10 },
         { code:'QIM114B', name:'Química Física I', crd:10 },
-        { code:'QIM104A', name:'Laboratorio Química Orgánica', crd:10 }
+        { code:'BIO288C', name:'Genética Molecular', crd:10 },
+        { code:'BIO299E', name:'Fisiología', crd:10 },
+        { code:'BIO299L', name:'Laboratorio de Fisiología', crd:5 }
       ]}
     ]},
     { year:'Cuarto Año', sems:[
       { num:7, label:'7mo Semestre', cursos:[
         { code:'QIM115', name:'Química Física II', crd:10 },
-        { code:'BIO299E', name:'Fisiología', crd:10 },
         { code:'BIO295A', name:'OPR Experiencia de Investigación', crd:15 }
       ]},
       { num:8, label:'8vo Semestre', cursos:[
-        { code:'BIO296F', name:'Seminario de Investigación', crd:30 },
-        { code:'MEB176B', name:'Laboratorio Clínico', crd:10 },
-        { code:'BIO299L', name:'Laboratorio de Fisiología', crd:5 }
+        { code:'BIO296F', name:'Seminario de Investigación o BIO258E Práctica extramural', crd:30 },
+        { code:'MEB176B', name:'Laboratorio Clínico', crd:10 }
       ]}
     ]}
   ],
@@ -440,10 +458,7 @@ const MALLAS = {
         { code: 'BIO114B', name: 'Biología de la Célula', crd: 10 },
         { code: 'MAT1000', name: 'Precálculo', crd: 10 },
         { code: 'QIM1001', name: 'Química General', crd: 10 },
-        { code: 'BIO105C', name: 'Desafíos de las Ciencias Biológicas', crd: 5 },
-        { code: 'VRA100C', name: 'Español', crd: 0, noGrade: true },
-        { code: 'VRA2000', name: 'English Test', crd: 0, noGrade: true },
-        { code: 'VRA4000', name: 'Integridad Académica en la UC', crd: 0, noGrade: true }
+        { code: 'BIO105C', name: 'Desafíos de las Ciencias Biológicas', crd: 5 }
       ]},
       { num: 2, label: '2do Semestre', cursos: [
         { code: 'BIO120C', name: 'Biología y Diversidad Vegetal', crd: 10 },
@@ -500,9 +515,7 @@ const MALLAS = {
         { code:'MAT1000', name:'Pre-Cálculo', crd:10 },
         { code:'QIM100I', name:'Química General I', crd:10 },
         { code:'QIM101L', name:'Lab. Química General', crd:5 },
-        { code:'FIL2001', name:'Filosofía: ¿Para qué?', crd:10 },
-        { code:'VRA100C', name:'Español', crd:0, noGrade:true },
-        { code:'VRA2000', name:'English Test', crd:0, noGrade:true }
+        { code:'FIL2001', name:'Filosofía: ¿Para qué?', crd:10 }
       ]},
       { num:2, label:'2do Semestre', cursos:[
         { code:'BIO110C', name:'Biología de Organismos y Comunidades', crd:10 },
@@ -559,18 +572,13 @@ const MALLAS = {
         { code:'BIO114B', name:'Biología de la Célula', crd:10 },
         { code:'MAT1000', name:'Pre-Cálculo', crd:10 },
         { code:'QIM1001', name:'Química General', crd:10 },
-        { code:'BIO130M', name:'Biología Marina', crd:10 },
-        { code:'VRA100C', name:'Español', crd:0, noGrade:true },
-        { code:'VRA2000', name:'English Test', crd:0, noGrade:true },
-        { code:'VRA4000', name:'Integridad Académica en la UC', crd:0, noGrade:true }
+        { code:'BIO130M', name:'Biología Marina', crd:10 }
       ]},
       { num:2, label:'2do Semestre', cursos:[
         { code:'BIO150M', name:'Invertebrados Marinos', crd:10 },
         { code:'FIS109C', name:'Física para Ciencias', crd:10 },
         { code:'MAT1100', name:'Cálculo I', crd:10 },
-        { code:'QIM100B', name:'Química General II', crd:10 },
-        { code:'FIS0109', name:'Laboratorio Física para Ciencias', crd:0, noGrade:true },
-        { code:'OFG1', name:'Formación General', crd:10 }
+        { code:'QIM100B', name:'Química General II', crd:10 }
       ]}
     ]},
     { year:'Segundo Año', sems:[
@@ -596,30 +604,20 @@ const MALLAS = {
         { code:'BIO330C', name:'Ecología (Major)', crd:10 },
         { code:'BIO324C', name:'Fisiología Celular (Major)', crd:10 },
         { code:'BIO310C', name:'Biomatemática / Modelación', crd:10 },
-        { code:'ETI201C', name:'Filosofía y Ética de la Ciencia', crd:5 },
-        { code:'OFG2', name:'Formación General', crd:10 }
+        { code:'ETI201C', name:'Filosofía y Ética de la Ciencia', crd:5 }
       ]},
       { num:6, label:'6to Semestre', cursos:[
         { code:'BIO374M', name:'Trabajo Experimental Ecología Marina', crd:10 },
         { code:'BIO372C', name:'Fisiología Animal Comparada', crd:10 },
-        { code:'BIO408C', name:'Ecoinformática (Major)', crd:10 },
-        { code:'OFG3', name:'Formación General', crd:10 },
-        { code:'OFG4', name:'Formación General', crd:10 }
+        { code:'BIO408C', name:'Ecoinformática (Major)', crd:10 }
       ]}
     ]},
     { year:'Cuarto Año', sems:[
       { num:7, label:'7mo Semestre', cursos:[
-        { code:'BIO415M', name:'Seminario de Investigación I', crd:10 },
-        { code:'OPR1', name:'Optativo o Minor', crd:10 },
-        { code:'OPR2', name:'Optativo o Minor', crd:10 },
-        { code:'OPR3', name:'Optativo o Minor', crd:10 },
-        { code:'OFG5', name:'Formación General', crd:10 }
+        { code:'BIO415M', name:'Seminario de Investigación I', crd:10 }
       ]},
       { num:8, label:'8vo Semestre', cursos:[
-        { code:'BIO416M', name:'Seminario de Investigación II', crd:25 },
-        { code:'OPR4', name:'Optativo o Minor', crd:10 },
-        { code:'OPR5', name:'Optativo o Minor', crd:10 },
-        { code:'OFG6', name:'Formación General', crd:10 }
+        { code:'BIO416M', name:'Seminario de Investigación II', crd:25 }
       ]}
     ]}
   ]
@@ -716,6 +714,13 @@ function renderCalc() {
   });
 
   c.appendChild(buildFinalSection());
+
+  // Bloque "5to año próximamente"
+  const block5to = document.createElement('div');
+  block5to.className = 'fifth-year-box';
+  block5to.innerHTML = '🎓 5to año próximamente...';
+  c.appendChild(block5to);
+
   const rr = document.createElement('div');
   rr.className='reset-row';
   rr.innerHTML='<button class="reset-btn-main" onclick="resetAll()">🗑 Reiniciar todo</button>';
@@ -996,9 +1001,22 @@ function removeAttempt(code, idx) {
   recalc();
 }
 
+let prevExamGrado = null;
 function setExamen(val) {
   examGrado = val===''?null:parseFloat(val);
   grades.__exam__=examGrado; saveGrades(); recalc();
+
+  if (examGrado !== null && !isNaN(examGrado) && examGrado >= 1 && examGrado <= 7 && examGrado !== prevExamGrado) {
+    prevExamGrado = examGrado;
+    if (typeof confetti === 'function') {
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    }
+    const toast = document.getElementById('toast-felicidades');
+    toast.className = 'show';
+    setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3500);
+  } else if (examGrado === null || isNaN(examGrado)) {
+    prevExamGrado = null;
+  }
 }
 
 // ════════════════════════════════════════
@@ -1257,7 +1275,7 @@ function useSimGrade() {
 // CÁLCULO PPA FINAL
 // ════════════════════════════════════════
 function recalc() {
-  let sumP=0, sumC=0, apr=0, rep=0;
+  let sumP=0, sumC=0, apr=0, rep=0, aprCrdTotal=0;
 
   MALLA.forEach(yr=>yr.sems.forEach(sem=>sem.cursos.forEach(c=>{
     if(c.noGrade) return;
@@ -1266,25 +1284,29 @@ function recalc() {
       const n = parseFloat(nota);
       if(isNaN(n)||n<1||n>7) return;
       sumP+=n*c.crd; sumC+=c.crd;
-      n>=4?apr++:rep++;
+      if (n >= 4) { apr++; aprCrdTotal += c.crd; } else { rep++; }
     });
   })));
 
   efgExtra.forEach(r=>{
     const n=parseFloat(r.nota), crd=parseInt(r.crd)||0;
     if(isNaN(n)||n<1||n>7||crd<=0) return;
-    sumP+=n*crd; sumC+=crd; n>=4?apr++:rep++;
+    sumP+=n*crd; sumC+=crd; 
+    if (n >= 4) { apr++; aprCrdTotal += crd; } else { rep++; }
   });
 
   oprLic.forEach(r=>{
     const n=parseFloat(r.nota), crd=parseInt(r.crd)||0;
     if(isNaN(n)||n<1||n>7||crd<=0) return;
-    sumP+=n*crd; sumC+=crd; n>=4?apr++:rep++;
+    sumP+=n*crd; sumC+=crd; 
+    if (n >= 4) { apr++; aprCrdTotal += crd; } else { rep++; }
   });
 
   const ppa = sumC>0 ? sumP/sumC : null;
   const examN = examGrado!==null&&!isNaN(examGrado)&&examGrado>=1&&examGrado<=7 ? examGrado : null;
   const notaLic = ppa!==null&&examN!==null ? (0.75*ppa)+(0.25*examN) : null;
+  
+  const progress = Math.min(100, (aprCrdTotal / 410) * 100);
 
   const pe=document.getElementById('stat-ppa');
   if(ppa!==null){ pe.textContent=ppa.toFixed(2); pe.className='big '+(ppa>=5.5?'good':ppa>=4.5?'warn':'bad'); }
@@ -1292,6 +1314,7 @@ function recalc() {
   document.getElementById('stat-crd').textContent=sumC;
   document.getElementById('stat-apr').textContent=apr;
   document.getElementById('stat-rep').textContent=rep;
+  document.getElementById('stat-prog').textContent=progress.toFixed(1) + '%';
 
   const grid=document.getElementById('final-grid');
   if(grid) grid.innerHTML=`
