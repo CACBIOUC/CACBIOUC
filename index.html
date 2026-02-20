@@ -107,8 +107,9 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .optional-note { font-size:0.75rem; color:var(--muted); font-style:italic; margin-bottom:8px; padding-left:4px; }
 .info-pill { display:inline-block; background:#e8eef8; color:var(--uc); font-size:0.72rem; padding:4px 12px; border-radius:20px; margin-bottom:10px; }
 
+/* Grid actualizado para botón eliminar intento */
 .course-row {
-  display:grid; grid-template-columns:1fr 100px 90px;
+  display:grid; grid-template-columns:1fr 100px 90px 30px;
   gap:10px; align-items:center; padding:10px 14px;
   background:var(--row-bg); border-radius:10px; margin-bottom:6px;
   border:1.5px solid transparent; transition:border-color 0.15s, background 0.3s;
@@ -139,7 +140,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .el-select { border:1.5px solid var(--border-col); border-radius:8px; padding:7px 10px; font-family: Arial, sans-serif; font-size:0.82rem; width:100%; background:var(--select-bg); color:var(--text); }
 .add-btn { background:none; border:1.5px dashed #bbb; color:#999; padding:7px 16px; border-radius:8px; cursor:pointer; font-family: Arial, sans-serif; font-size:0.82rem; margin-top:6px; transition:all 0.2s; font-weight:bold; }
 .add-btn:hover { border-color:var(--uc); color:var(--uc); }
-.del-btn { background:none; border:none; color:#ccc; font-size:1.3rem; cursor:pointer; }
+.del-btn { background:none; border:none; color:#ccc; font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .del-btn:hover { color:var(--red); }
 .exam-box { background:var(--final-bg); border:2px solid var(--gold); border-radius:12px; padding:18px 20px; display:flex; align-items:center; gap:20px; margin-bottom:20px; }
 .exam-info h4 { font-family: Arial, sans-serif; font-weight:bold; font-size:1rem; }
@@ -179,7 +180,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 @media(max-width:640px){
   .stats-bar { gap:14px; padding:12px 16px; }
   .calc-content { padding:20px 12px 60px; }
-  .course-row { grid-template-columns:1fr 80px 80px; }
+  .course-row { grid-template-columns:1fr 80px 80px 30px; }
   .final-grid { grid-template-columns:1fr; }
 }
 </style>
@@ -371,7 +372,7 @@ let examGrado = null;
 let efgExtra  = [];
 let oprLic    = [];
 let simData   = {};
-let currentSimCourse = null;
+let currentSimCourse = null; // {code, name, type, targetId}
 let uid = 0;
 
 const EFG_AREAS = ['Teológico','Humanidades','Artes','Salud y Bienestar','Cs. Sociales','Ecología y Sustentabilidad','Libre'];
@@ -383,7 +384,13 @@ function selectCareer(id) {
   efgExtra  = JSON.parse(localStorage.getItem('ppa4-efg-'+id) || '[]');
   oprLic    = JSON.parse(localStorage.getItem('ppa4-opr-'+id) || '[]');
   simData   = JSON.parse(localStorage.getItem('ppa4-sim-'+id) || '{}');
-  uid = efgExtra.length + oprLic.length;
+  
+  // Limpiar posibles IDs repetidos y fijar nuevo uid máximo
+  let maxUid = 0;
+  efgExtra.forEach(r => { if(parseInt(r.id.substring(1)) > maxUid) maxUid = parseInt(r.id.substring(1)); });
+  oprLic.forEach(r => { if(parseInt(r.id.substring(1)) > maxUid) maxUid = parseInt(r.id.substring(1)); });
+  uid = maxUid;
+
   document.getElementById('screen-career').style.display = 'none';
   document.getElementById('screen-calc').style.display   = 'block';
   renderCalc();
@@ -473,7 +480,7 @@ function makeCourseBlock(curso) {
           <div class="course-name" title="${curso.name}">${curso.name}</div>
           <div class="course-crd">
             ${curso.crd} créditos · 
-            <button class="btn-link" onclick="openSim('${curso.code}', '${curso.name.replace(/'/g, "\\'")}', ${idx})" style="font-size:0.75rem; font-weight:bold;">📊 Simular notas del ramo</button>
+            <button class="btn-link" onclick="openSim('${curso.code}', '${curso.name.replace(/'/g, "\\'")}', 'malla', ${idx})" style="font-size:0.75rem; font-weight:bold;">📊 Simular notas del ramo</button>
           </div>
         </div>
         <input class="grade-input ${hasN?(aprobado?'valid':'invalid'):''}" type="number"
@@ -481,6 +488,9 @@ function makeCourseBlock(curso) {
           oninput="setAttemptGrade('${curso.code}', ${idx}, this)" />
         <div class="course-status" id="status-${curso.code}-${idx}">
           ${hasN ? (aprobado ? '✓ Aprobado' : '✗ Reprobado') : '—'}
+        </div>
+        <div>
+          ${isRetry ? `<button class="del-btn" onclick="removeAttempt('${curso.code}', ${idx})" title="Eliminar intento fallido" style="font-size:1.3rem;">×</button>` : ''}
         </div>
       `;
       wrap.appendChild(row);
@@ -510,6 +520,7 @@ function buildFinalSection() {
 
   box.innerHTML = `<h3>📊 Electivos, Examen de Grado y Notas Finales</h3>`;
 
+  // EFG
   const efgB = document.createElement('div');
   efgB.className = 'elective-block';
   efgB.innerHTML = '<h4>EFG — Optativos de Formación General (60 créditos requeridos)</h4>';
@@ -526,6 +537,7 @@ function buildFinalSection() {
   efgB.appendChild(addEFG);
   box.appendChild(efgB);
 
+  // OPR
   const oprB = document.createElement('div');
   oprB.className = 'elective-block';
   oprB.innerHTML = '<h4>OPR Licenciatura (20 crd requeridos) y OPR adicionales del 7mo semestre</h4>';
@@ -542,6 +554,7 @@ function buildFinalSection() {
   oprB.appendChild(addOPR);
   box.appendChild(oprB);
 
+  // EXAMEN
   const examDiv = document.createElement('div');
   examDiv.className = 'exam-box';
   examDiv.innerHTML = `
@@ -568,8 +581,18 @@ function makeEFGRow(r) {
   div.style.cssText='display:grid;grid-template-columns:1fr 130px 60px 90px 30px;gap:8px;align-items:center;margin-bottom:6px;';
   div.id='efg-'+r.id;
 
-  const ni=document.createElement('input'); ni.className='el-input'; ni.type='text'; ni.placeholder='Nombre del curso'; ni.value=r.nombre||'';
-  ni.oninput=e=>{r.nombre=e.target.value;saveEFG();};
+  const nameWrap = document.createElement('div');
+  const ni = document.createElement('input'); 
+  ni.className='el-input'; ni.type='text'; ni.placeholder='Nombre del EFG'; ni.value=r.nombre||'';
+  ni.oninput = e => { r.nombre = e.target.value; saveEFG(); };
+  
+  const simBtn = document.createElement('button');
+  simBtn.className = 'btn-link';
+  simBtn.textContent = '📊 Simular notas';
+  simBtn.style.cssText = 'font-size:0.75rem; font-weight:bold; margin-top:4px; display:block; text-align:left;';
+  simBtn.onclick = () => openSim(r.id, r.nombre || 'EFG', 'efg', r.id);
+  nameWrap.appendChild(ni);
+  nameWrap.appendChild(simBtn);
 
   const sel = document.createElement('select'); sel.className='el-select';
   sel.innerHTML = '<option value="">— Área —</option>' + EFG_AREAS.map(a=>`<option ${r.area===a?'selected':''} value="${a}">${a}</option>`).join('');
@@ -583,24 +606,51 @@ function makeEFGRow(r) {
   inp.oninput = e => { r.nota=e.target.value; saveEFG(); recalc(); };
 
   const del = document.createElement('button'); del.className='del-btn'; del.textContent='×';
-  del.onclick = () => { efgExtra=efgExtra.filter(x=>x.id!==r.id); saveEFG(); div.remove(); recalc(); };
+  del.onclick = () => { 
+    efgExtra=efgExtra.filter(x=>x.id!==r.id); 
+    saveEFG(); 
+    delete simData[r.id]; 
+    saveSim(); 
+    div.remove(); 
+    recalc(); 
+  };
 
-  div.appendChild(ni); div.appendChild(sel); div.appendChild(ci); div.appendChild(inp); div.appendChild(del);
+  div.appendChild(nameWrap); div.appendChild(sel); div.appendChild(ci); div.appendChild(inp); div.appendChild(del);
   return div;
 }
 
 function makeOPRRow(r) {
   const div = document.createElement('div');
   div.className='elective-row four-col'; div.id='opr-'+r.id;
-  const ni=document.createElement('input'); ni.className='el-input'; ni.type='text'; ni.placeholder='Nombre del OPR'; ni.value=r.nombre||'';
+  
+  const nameWrap = document.createElement('div');
+  const ni=document.createElement('input'); 
+  ni.className='el-input'; ni.type='text'; ni.placeholder='Nombre del OPR'; ni.value=r.nombre||'';
   ni.oninput=e=>{r.nombre=e.target.value;saveOPR();};
+  
+  const simBtn = document.createElement('button');
+  simBtn.className = 'btn-link';
+  simBtn.textContent = '📊 Simular notas';
+  simBtn.style.cssText = 'font-size:0.75rem; font-weight:bold; margin-top:4px; display:block; text-align:left;';
+  simBtn.onclick = () => openSim(r.id, r.nombre || 'OPR', 'opr', r.id);
+  nameWrap.appendChild(ni);
+  nameWrap.appendChild(simBtn);
+
   const ci=document.createElement('input'); ci.className='el-input'; ci.type='number'; ci.min=1; ci.placeholder='Crd'; ci.value=r.crd||10; ci.style.textAlign='center';
   ci.oninput=e=>{r.crd=parseInt(e.target.value)||0;saveOPR();recalc();};
   const gi=document.createElement('input'); gi.className='el-input'; gi.type='number'; gi.min=1; gi.max=7; gi.step=0.1; gi.placeholder='Nota'; gi.value=r.nota||''; gi.style.textAlign='center'; gi.style.fontWeight='bold';
   gi.oninput=e=>{r.nota=e.target.value;saveOPR();recalc();};
   const del=document.createElement('button'); del.className='del-btn'; del.textContent='×';
-  del.onclick=()=>{oprLic=oprLic.filter(x=>x.id!==r.id);saveOPR();div.remove();recalc();};
-  div.appendChild(ni);div.appendChild(ci);div.appendChild(gi);div.appendChild(del);
+  del.onclick=()=>{
+    oprLic=oprLic.filter(x=>x.id!==r.id);
+    saveOPR();
+    delete simData[r.id];
+    saveSim();
+    div.remove();
+    recalc();
+  };
+  
+  div.appendChild(nameWrap); div.appendChild(ci); div.appendChild(gi); div.appendChild(del);
   return div;
 }
 
@@ -648,13 +698,22 @@ function addAttempt(code) {
   recalc();
 }
 
+function removeAttempt(code, idx) {
+  if (!Array.isArray(grades[code])) return;
+  grades[code].splice(idx, 1);
+  saveGrades();
+  const block = document.getElementById('block-' + code);
+  if(block && block._rebuild) block._rebuild();
+  recalc();
+}
+
 function setExamen(val) {
   examGrado = val===''?null:parseFloat(val);
   grades.__exam__=examGrado; saveGrades(); recalc();
 }
 
 // ════════════════════════════════════════
-// LÓGICA DEL SIMULADOR (CON EXAMEN)
+// LÓGICA DEL SIMULADOR 
 // ════════════════════════════════════════
 function formatReq(n) {
   if (n <= 1) return 'Ya lo lograste (Mín. 1.0)';
@@ -662,10 +721,9 @@ function formatReq(n) {
   return n.toFixed(2);
 }
 
-function openSim(code, name, targetIdx) {
-  currentSimCourse = {code, name, targetIdx};
+function openSim(code, name, type, targetId) {
+  currentSimCourse = {code, name, type, targetId};
   
-  // Migrar estructura antigua o inicializar
   if(!simData[code] || Array.isArray(simData[code])) {
     simData[code] = {
       hasExam: false,
@@ -779,7 +837,6 @@ function calcSimTotals() {
   resHTML += `<p>Total de presentación ingresado: <span style="font-weight:bold; color:${wSum>100?'var(--red)':'var(--uc)'}">${wSum}% / 100%</span></p>`;
 
   if (wSum < 100) {
-    // EN PROGRESO
     let currentAvg = wSum > 0 ? (npAccum / (wSum/100)).toFixed(2) : '—';
     resHTML += `<p>Promedio ponderado a la fecha: <strong>${currentAvg}</strong></p>`;
     
@@ -796,7 +853,6 @@ function calcSimTotals() {
     document.getElementById('sim-exam-grade-box').style.display = 'none';
     
   } else if (wSum === 100) {
-    // SEMESTRE CERRADO
     let np = npAccum;
     resHTML += `<p>Nota de Presentación (NP): <strong style="font-size:1.1rem;">${np.toFixed(2)}</strong></p>`;
     
@@ -812,13 +868,9 @@ function calcSimTotals() {
         document.getElementById('sim-exam-grade-box').style.display = 'none';
       } else {
         resHTML += `<p style="color:var(--orange); font-weight:bold;">⚠️ No te eximes (NP menor a ${data.eximGrade.toFixed(1)}).</p>`;
-        
-        // Calcular nota de examen requerida para pasar con 4.0
-        // 4.0 = NP * (1 - examWeight) + Examen * examWeight
         let ew = data.examWeight / 100;
         let reqExam = (4.0 - np * (1 - ew)) / ew;
         resHTML += `<p>Nota necesaria en el Examen para aprobar (4.0): <strong class="${reqExam>7?'req-grade':''}">${formatReq(reqExam)}</strong></p>`;
-        
         document.getElementById('sim-exam-grade-box').style.display = 'block';
         
         let gEx = parseFloat(data.examGrade);
@@ -873,21 +925,45 @@ function useSimGrade() {
     }
   }
   
-  const idx = currentSimCourse.targetIdx;
   const finalStr = finalGrade.toFixed(1);
   
-  const inp = document.querySelector(`#row-${currentSimCourse.code}-${idx} .grade-input`);
-  if (inp) {
-    inp.value = finalStr;
-    setAttemptGrade(currentSimCourse.code, idx, inp);
-  } else {
-    if(!Array.isArray(grades[currentSimCourse.code])) grades[currentSimCourse.code] = [''];
-    grades[currentSimCourse.code][idx] = finalStr;
-    saveGrades();
-    const block = document.getElementById('block-' + currentSimCourse.code);
-    if(block) block._rebuild();
-    recalc();
+  // Dependiendo del tipo de ramo, guardamos en el lugar correcto
+  if (currentSimCourse.type === 'malla') {
+    const idx = currentSimCourse.targetId;
+    const inp = document.querySelector(`#row-${currentSimCourse.code}-${idx} .grade-input`);
+    if (inp) {
+      inp.value = finalStr;
+      setAttemptGrade(currentSimCourse.code, idx, inp);
+    } else {
+      if(!Array.isArray(grades[currentSimCourse.code])) grades[currentSimCourse.code] = [''];
+      grades[currentSimCourse.code][idx] = finalStr;
+      saveGrades();
+      const block = document.getElementById('block-' + currentSimCourse.code);
+      if(block) block._rebuild();
+      recalc();
+    }
+  } else if (currentSimCourse.type === 'efg') {
+    const item = efgExtra.find(x => x.id === currentSimCourse.targetId);
+    if (item) {
+      item.nota = finalStr;
+      saveEFG();
+      // Reflejar en el input visual
+      const inputs = document.querySelectorAll(`#efg-${item.id} input.el-input`);
+      inputs.forEach(i => { if(i.placeholder === 'Nota') i.value = finalStr; });
+      recalc();
+    }
+  } else if (currentSimCourse.type === 'opr') {
+    const item = oprLic.find(x => x.id === currentSimCourse.targetId);
+    if (item) {
+      item.nota = finalStr;
+      saveOPR();
+      // Reflejar en el input visual
+      const inputs = document.querySelectorAll(`#opr-${item.id} input.el-input`);
+      inputs.forEach(i => { if(i.placeholder === 'Nota') i.value = finalStr; });
+      recalc();
+    }
   }
+  
   closeSim();
 }
 
