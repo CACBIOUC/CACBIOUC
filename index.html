@@ -163,6 +163,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:2px solid var(--uc); padding-bottom:10px; }
 .modal-header h3 { color:var(--uc); font-family: Arial, sans-serif; font-weight:bold; }
 .close-btn { background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--muted); }
+.exam-settings { background:var(--row-bg); padding:14px; border-radius:8px; margin-bottom:16px; border:1.5px solid var(--border-col); }
 .sim-row { display:grid; grid-template-columns: 1fr 70px 70px 30px; gap:8px; margin-bottom:8px; align-items:center; }
 .sim-input { width:100%; border:1.5px solid #ddd; border-radius:6px; padding:6px; font-family: Arial, sans-serif; font-size:0.85rem; text-align:center; background:var(--input-bg); color:var(--text); }
 .sim-input-text { text-align:left; }
@@ -170,7 +171,7 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
 .sim-results { background:var(--final-bg); border:1.5px solid var(--border-col); border-radius:8px; padding:16px; margin-top:16px; }
 .sim-results p { margin-bottom:6px; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center; }
 .sim-results strong { color:var(--uc); }
-.sim-results .req-grade { color:var(--orange); font-weight:bold; font-size:1.1rem; }
+.sim-results .req-grade { color:var(--red); font-weight:bold; font-size:1.1rem; }
 .sim-save-btn { background:var(--green); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; font-size:0.9rem; width:100%; margin-top:16px; font-weight:bold; transition: background 0.2s; }
 .sim-save-btn:hover { background: #236140; }
 .retry-btn { margin-top:4px; padding:6px; background-color:var(--orange-bg); color:var(--orange); border:none; width:100%; border-radius:6px; font-weight:bold; cursor:pointer; font-size:0.8rem; display:none; }
@@ -258,18 +259,39 @@ body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); 
       <h3 id="sim-title">Simulador de Notas</h3>
       <button class="close-btn" onclick="closeSim()">×</button>
     </div>
-    <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">Ingresa las evaluaciones, su porcentaje y la nota. El simulador calculará tu nota de presentación y qué necesitas en el resto para aprobar.</p>
+    
+    <div class="exam-settings">
+      <label style="display:flex; align-items:center; gap:8px; font-weight:bold; cursor:pointer; color:var(--uc);">
+        <input type="checkbox" id="sim-chk-exam" onchange="toggleSimExam()"> El curso tiene Examen Final
+      </label>
+      <div id="sim-exam-details" style="display:none; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border-col);">
+        <div>
+          <label style="font-size:0.75rem; color:var(--muted); font-weight:bold;">Ponderación Examen (%)</label>
+          <input type="number" id="sim-inp-exam-weight" class="sim-input" value="30" oninput="updateSimConfig()">
+        </div>
+        <div>
+          <label style="font-size:0.75rem; color:var(--muted); font-weight:bold;">Nota para eximirse</label>
+          <input type="number" id="sim-inp-exam-exim" class="sim-input" step="0.1" value="5.0" oninput="updateSimConfig()">
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px; font-weight:bold; padding-left:4px;">
+      📌 Evaluaciones de Presentación (Sus porcentajes deben sumar 100%)
+    </p>
     
     <div id="sim-rows"></div>
     <button class="sim-add-btn" onclick="addSimRow()">+ Agregar evaluación</button>
 
-    <div class="sim-results">
-      <p>Total evaluado: <span id="sim-weight" style="font-weight:bold;">0%</span></p>
-      <p>Nota acumulada (Ponderada): <span id="sim-current" style="font-weight:bold;">—</span></p>
-      <hr style="border:0; border-top:1px solid var(--border-col); margin:10px 0;">
-      <p>Nota necesaria en el resto: <span id="sim-req" class="req-grade">—</span></p>
+    <div id="sim-exam-grade-box" style="display:none; margin-top:16px; background:var(--orange-bg); padding:12px; border-radius:8px; border:1.5px dashed var(--orange);">
+      <label style="font-size:0.85rem; color:var(--orange); font-weight:bold; display:block; margin-bottom:6px;">📝 Tuviste que dar examen. Ingresa tu nota:</label>
+      <input type="number" id="sim-inp-exam-grade" class="sim-input" style="border-color:var(--orange); max-width:150px;" min="1" max="7" step="0.1" placeholder="Nota Examen" oninput="updateSimExamGrade()">
     </div>
-    <button class="sim-save-btn" onclick="useSimGrade()">Usar nota final en la calculadora PPA</button>
+
+    <div class="sim-results" id="sim-results-content">
+      </div>
+
+    <button class="sim-save-btn" onclick="useSimGrade()">Guardar Nota Final en el Calculador PPA</button>
   </div>
 </div>
 
@@ -451,11 +473,11 @@ function makeCourseBlock(curso) {
           <div class="course-name" title="${curso.name}">${curso.name}</div>
           <div class="course-crd">
             ${curso.crd} créditos · 
-            <button class="btn-link" onclick="openSim('${curso.code}', '${curso.name.replace(/'/g, "\\'")}', ${idx})" style="font-size:0.75rem; font-weight:bold;">📊 Simular notas</button>
+            <button class="btn-link" onclick="openSim('${curso.code}', '${curso.name.replace(/'/g, "\\'")}', ${idx})" style="font-size:0.75rem; font-weight:bold;">📊 Simular notas del ramo</button>
           </div>
         </div>
         <input class="grade-input ${hasN?(aprobado?'valid':'invalid'):''}" type="number"
-          min="1" max="7" step="0.1" placeholder="Nota" value="${nota}"
+          min="1" max="7" step="0.1" placeholder="Nota Final" value="${nota}"
           oninput="setAttemptGrade('${curso.code}', ${idx}, this)" />
         <div class="course-status" id="status-${curso.code}-${idx}">
           ${hasN ? (aprobado ? '✓ Aprobado' : '✗ Reprobado') : '—'}
@@ -467,7 +489,6 @@ function makeCourseBlock(curso) {
     const lastNota = parseFloat(atts[atts.length - 1]);
     const approvedAlready = atts.some(n => parseFloat(n) >= 4.0);
     
-    // Botón manual para agregar intento si se reprobó (evita reconstruir DOM mientras se escribe)
     const retryBtn = document.createElement('button');
     retryBtn.className = 'retry-btn';
     retryBtn.id = 'retry-btn-' + curso.code;
@@ -584,7 +605,7 @@ function makeOPRRow(r) {
 }
 
 // ════════════════════════════════════════
-// SETTERS DE NOTAS (MODIFICADOS PARA NO ROMPER INPUT)
+// SETTERS PPA GENERAL
 // ════════════════════════════════════════
 function setAttemptGrade(code, idx, input) {
   if (!Array.isArray(grades[code])) grades[code] = [''];
@@ -595,7 +616,6 @@ function setAttemptGrade(code, idx, input) {
   const hasN = input.value !== '' && !isNaN(n) && n >= 1 && n <= 7;
   const aprobado = hasN && n >= 4.0;
 
-  // Actualizar clases sin destruir el DOM
   input.classList.remove('valid', 'invalid');
   if (hasN) input.classList.add(aprobado ? 'valid' : 'invalid');
 
@@ -608,7 +628,6 @@ function setAttemptGrade(code, idx, input) {
   const st = document.getElementById('status-' + code + '-' + idx);
   if (st) st.textContent = !hasN ? '—' : (aprobado ? '✓ Aprobado' : '✗ Reprobado');
 
-  // Mostrar botón de repetir si corresponde
   const retryBtn = document.getElementById('retry-btn-' + code);
   if (retryBtn) {
     const atts = grades[code];
@@ -635,17 +654,40 @@ function setExamen(val) {
 }
 
 // ════════════════════════════════════════
-// SIMULADOR DE NOTAS
+// LÓGICA DEL SIMULADOR (CON EXAMEN)
 // ════════════════════════════════════════
+function formatReq(n) {
+  if (n <= 1) return 'Ya lo lograste (Mín. 1.0)';
+  if (n > 7) return n.toFixed(2) + ' (Imposible)';
+  return n.toFixed(2);
+}
+
 function openSim(code, name, targetIdx) {
   currentSimCourse = {code, name, targetIdx};
-  if(!simData[code]) {
-    simData[code] = [
-      {name:'Interrogación 1', weight:20, grade:''},
-      {name:'Examen', weight:30, grade:''}
-    ];
+  
+  // Migrar estructura antigua o inicializar
+  if(!simData[code] || Array.isArray(simData[code])) {
+    simData[code] = {
+      hasExam: false,
+      examWeight: 30,
+      eximGrade: 5.0,
+      evals: Array.isArray(simData[code]) ? simData[code] : [
+        {name:'Interrogación 1', weight:30, grade:''},
+        {name:'Interrogación 2', weight:30, grade:''},
+        {name:'Tareas', weight:40, grade:''}
+      ],
+      examGrade: ''
+    };
   }
+  
+  const data = simData[code];
   document.getElementById('sim-title').textContent = name;
+  document.getElementById('sim-chk-exam').checked = data.hasExam;
+  document.getElementById('sim-exam-details').style.display = data.hasExam ? 'grid' : 'none';
+  document.getElementById('sim-inp-exam-weight').value = data.examWeight;
+  document.getElementById('sim-inp-exam-exim').value = data.eximGrade;
+  document.getElementById('sim-inp-exam-grade').value = data.examGrade || '';
+  
   renderSim();
   document.getElementById('sim-modal').style.display = 'flex';
 }
@@ -654,11 +696,32 @@ function closeSim() {
   document.getElementById('sim-modal').style.display = 'none';
 }
 
+function toggleSimExam() {
+  const isChecked = document.getElementById('sim-chk-exam').checked;
+  simData[currentSimCourse.code].hasExam = isChecked;
+  document.getElementById('sim-exam-details').style.display = isChecked ? 'grid' : 'none';
+  saveSim();
+  calcSimTotals();
+}
+
+function updateSimConfig() {
+  simData[currentSimCourse.code].examWeight = parseFloat(document.getElementById('sim-inp-exam-weight').value) || 0;
+  simData[currentSimCourse.code].eximGrade = parseFloat(document.getElementById('sim-inp-exam-exim').value) || 5.0;
+  saveSim();
+  calcSimTotals();
+}
+
+function updateSimExamGrade() {
+  simData[currentSimCourse.code].examGrade = document.getElementById('sim-inp-exam-grade').value;
+  saveSim();
+  calcSimTotals();
+}
+
 function renderSim() {
   const container = document.getElementById('sim-rows');
   container.innerHTML = '';
   
-  simData[currentSimCourse.code].forEach((item, i) => {
+  simData[currentSimCourse.code].evals.forEach((item, i) => {
     const div = document.createElement('div');
     div.className = 'sim-row';
     div.innerHTML = `
@@ -675,97 +738,157 @@ function renderSim() {
 }
 
 function updateSim(idx, field, val) {
-  simData[currentSimCourse.code][idx][field] = val;
-  localStorage.setItem('ppa4-sim-'+currentCareer, JSON.stringify(simData));
+  simData[currentSimCourse.code].evals[idx][field] = val;
+  saveSim();
   calcSimTotals();
 }
 
-function calcSimTotals() {
-  let totalWeight = 0;
-  let accumulated = 0;
-  simData[currentSimCourse.code].forEach((item) => {
-    const w = parseFloat(item.weight) || 0;
-    const g = parseFloat(item.grade);
-    totalWeight += w;
-    if (!isNaN(g) && g >= 1 && g <= 7) {
-      accumulated += g * (w / 100);
-    }
-  });
-
-  const missingWeight = Math.max(0, 100 - totalWeight);
-  let missingFor4 = 4.0 - accumulated;
-  let reqGradeText = '—';
-  let reqColor = 'var(--text)';
-
-  if (missingWeight > 0) {
-    let reqGrade = missingFor4 / (missingWeight / 100);
-    if (reqGrade > 7) { reqGradeText = reqGrade.toFixed(2) + ' (Imposible)'; reqColor = 'var(--red)'; }
-    else if (reqGrade <= 1) { reqGradeText = 'Ya aprobaste'; reqColor = 'var(--green)'; }
-    else { reqGradeText = reqGrade.toFixed(2); reqColor = 'var(--orange)'; }
-  } else {
-    if (accumulated >= 4.0) { reqGradeText = 'Aprobado (' + accumulated.toFixed(2) + ')'; reqColor = 'var(--green)'; }
-    else { reqGradeText = 'Reprobado (' + accumulated.toFixed(2) + ')'; reqColor = 'var(--red)'; }
-  }
-
-  document.getElementById('sim-current').textContent = accumulated > 0 ? accumulated.toFixed(2) : '—';
-  
-  const reqEl = document.getElementById('sim-req');
-  if(reqEl) {
-    reqEl.textContent = reqGradeText;
-    reqEl.style.color = reqColor;
-  }
-  
-  const wEl = document.getElementById('sim-weight');
-  if(wEl) {
-    wEl.textContent = totalWeight + '%';
-    wEl.style.color = totalWeight > 100 ? 'var(--red)' : 'var(--text)';
-  }
-}
-
 function addSimRow() {
-  simData[currentSimCourse.code].push({name:'', weight:'', grade:''});
-  localStorage.setItem('ppa4-sim-'+currentCareer, JSON.stringify(simData));
+  simData[currentSimCourse.code].evals.push({name:'', weight:'', grade:''});
+  saveSim();
   renderSim();
 }
 
 function delSim(idx) {
-  simData[currentSimCourse.code].splice(idx, 1);
-  localStorage.setItem('ppa4-sim-'+currentCareer, JSON.stringify(simData));
+  simData[currentSimCourse.code].evals.splice(idx, 1);
+  saveSim();
   renderSim();
 }
 
+function saveSim() {
+  localStorage.setItem('ppa4-sim-'+currentCareer, JSON.stringify(simData));
+}
+
+function calcSimTotals() {
+  const data = simData[currentSimCourse.code];
+  let wSum = 0;
+  let npAccum = 0;
+
+  data.evals.forEach(ev => {
+    let w = parseFloat(ev.weight) || 0;
+    let g = parseFloat(ev.grade);
+    wSum += w;
+    if(!isNaN(g) && g >= 1 && g <= 7) {
+      npAccum += g * (w / 100);
+    }
+  });
+
+  const wMissing = Math.max(0, 100 - wSum);
+  let resHTML = '';
+  
+  resHTML += `<p>Total de presentación ingresado: <span style="font-weight:bold; color:${wSum>100?'var(--red)':'var(--uc)'}">${wSum}% / 100%</span></p>`;
+
+  if (wSum < 100) {
+    // EN PROGRESO
+    let currentAvg = wSum > 0 ? (npAccum / (wSum/100)).toFixed(2) : '—';
+    resHTML += `<p>Promedio ponderado a la fecha: <strong>${currentAvg}</strong></p>`;
+    
+    let missingFor4 = 4.0 - npAccum;
+    let req4 = missingFor4 / (wMissing / 100);
+    resHTML += `<p>Nota necesaria en el ${wMissing}% restante para NP 4.0: <strong class="${req4>7?'req-grade':''}">${formatReq(req4)}</strong></p>`;
+    
+    if (data.hasExam) {
+      let missingForExim = data.eximGrade - npAccum;
+      let reqExim = missingForExim / (wMissing / 100);
+      resHTML += `<p>Nota necesaria en el ${wMissing}% restante para Eximirte (NP ${data.eximGrade}): <strong class="${reqExim>7?'req-grade':''}">${formatReq(reqExim)}</strong></p>`;
+    }
+    
+    document.getElementById('sim-exam-grade-box').style.display = 'none';
+    
+  } else if (wSum === 100) {
+    // SEMESTRE CERRADO
+    let np = npAccum;
+    resHTML += `<p>Nota de Presentación (NP): <strong style="font-size:1.1rem;">${np.toFixed(2)}</strong></p>`;
+    
+    if (!data.hasExam) {
+      resHTML += `<hr style="border:0; border-top:1px solid var(--border-col); margin:10px 0;">`;
+      resHTML += `<p>Nota Final del Ramo: <strong style="color:${np>=4?'var(--green)':'var(--red)'}; font-size:1.2rem;">${np.toFixed(1)}</strong></p>`;
+      document.getElementById('sim-exam-grade-box').style.display = 'none';
+    } else {
+      if (np >= data.eximGrade) {
+        resHTML += `<p style="color:var(--green); font-weight:bold;">🎉 ¡Felicidades! Te eximiste del examen.</p>`;
+        resHTML += `<hr style="border:0; border-top:1px solid var(--border-col); margin:10px 0;">`;
+        resHTML += `<p>Nota Final del Ramo: <strong style="color:var(--green); font-size:1.2rem;">${np.toFixed(1)}</strong></p>`;
+        document.getElementById('sim-exam-grade-box').style.display = 'none';
+      } else {
+        resHTML += `<p style="color:var(--orange); font-weight:bold;">⚠️ No te eximes (NP menor a ${data.eximGrade.toFixed(1)}).</p>`;
+        
+        // Calcular nota de examen requerida para pasar con 4.0
+        // 4.0 = NP * (1 - examWeight) + Examen * examWeight
+        let ew = data.examWeight / 100;
+        let reqExam = (4.0 - np * (1 - ew)) / ew;
+        resHTML += `<p>Nota necesaria en el Examen para aprobar (4.0): <strong class="${reqExam>7?'req-grade':''}">${formatReq(reqExam)}</strong></p>`;
+        
+        document.getElementById('sim-exam-grade-box').style.display = 'block';
+        
+        let gEx = parseFloat(data.examGrade);
+        if (!isNaN(gEx) && gEx >= 1 && gEx <= 7) {
+          let nf = np * (1 - ew) + gEx * ew;
+          resHTML += `<hr style="border:0; border-top:1px solid var(--border-col); margin:10px 0;">`;
+          resHTML += `<p>Nota Final del Ramo: <strong style="color:${nf>=4?'var(--green)':'var(--red)'}; font-size:1.2rem;">${nf.toFixed(1)}</strong></p>`;
+        } else {
+          resHTML += `<hr style="border:0; border-top:1px solid var(--border-col); margin:10px 0;">`;
+          resHTML += `<p>Nota Final del Ramo: <strong>Esperando nota de examen...</strong></p>`;
+        }
+      }
+    }
+  } else {
+    resHTML += `<p style="color:var(--red); font-weight:bold;">Los porcentajes de presentación suman más de 100%. Por favor corrige los valores.</p>`;
+    document.getElementById('sim-exam-grade-box').style.display = 'none';
+  }
+
+  document.getElementById('sim-results-content').innerHTML = resHTML;
+}
+
 function useSimGrade() {
-  let totalWeight = 0;
-  let accumulated = 0;
-  simData[currentSimCourse.code].forEach((item) => {
-    const w = parseFloat(item.weight) || 0;
-    const g = parseFloat(item.grade);
-    totalWeight += w;
-    if (!isNaN(g) && g >= 1 && g <= 7) accumulated += g * (w / 100);
+  const data = simData[currentSimCourse.code];
+  let wSum = 0; let npAccum = 0;
+  
+  data.evals.forEach(ev => {
+    let w = parseFloat(ev.weight)||0; 
+    let g = parseFloat(ev.grade);
+    wSum += w; 
+    if(!isNaN(g) && g>=1 && g<=7) npAccum += g*(w/100);
   });
   
-  if (totalWeight === 100 && accumulated > 0) {
-    const idx = currentSimCourse.targetIdx;
-    const finalGrade = accumulated.toFixed(1);
-    
-    // Asignar en el DOM visual si existe
-    const inp = document.querySelector(`#row-${currentSimCourse.code}-${idx} .grade-input`);
-    if (inp) {
-      inp.value = finalGrade;
-      setAttemptGrade(currentSimCourse.code, idx, inp);
-    } else {
-      // Por seguridad si no encuentra el input
-      if(!Array.isArray(grades[currentSimCourse.code])) grades[currentSimCourse.code] = [''];
-      grades[currentSimCourse.code][idx] = finalGrade;
-      saveGrades();
-      const block = document.getElementById('block-' + currentSimCourse.code);
-      if(block) block._rebuild();
-      recalc();
-    }
-    closeSim();
-  } else {
-    alert('Para usar esta nota final, la suma de los porcentajes ingresados debe ser exactamente 100%.');
+  if (wSum !== 100) {
+    alert('Para usar la nota, los porcentajes de presentación deben sumar exactamente 100%.');
+    return;
   }
+  
+  let finalGrade = 0;
+  if (!data.hasExam) {
+    finalGrade = npAccum;
+  } else {
+    if (npAccum >= data.eximGrade) {
+      finalGrade = npAccum;
+    } else {
+      let ex = parseFloat(data.examGrade);
+      if (isNaN(ex) || ex < 1 || ex > 7) {
+        alert('Como no te eximiste, debes ingresar la nota del examen final para poder calcular tu nota final del ramo.');
+        return;
+      }
+      let ew = data.examWeight / 100;
+      finalGrade = npAccum * (1 - ew) + ex * ew;
+    }
+  }
+  
+  const idx = currentSimCourse.targetIdx;
+  const finalStr = finalGrade.toFixed(1);
+  
+  const inp = document.querySelector(`#row-${currentSimCourse.code}-${idx} .grade-input`);
+  if (inp) {
+    inp.value = finalStr;
+    setAttemptGrade(currentSimCourse.code, idx, inp);
+  } else {
+    if(!Array.isArray(grades[currentSimCourse.code])) grades[currentSimCourse.code] = [''];
+    grades[currentSimCourse.code][idx] = finalStr;
+    saveGrades();
+    const block = document.getElementById('block-' + currentSimCourse.code);
+    if(block) block._rebuild();
+    recalc();
+  }
+  closeSim();
 }
 
 // ════════════════════════════════════════
