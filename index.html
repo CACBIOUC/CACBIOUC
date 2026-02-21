@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal CABIOUC — Consejería Académica</title>
+<link rel="icon" type="image/png" href="https://i.ibb.co/JjN0BKLC/Whats-App-Image-2025-12-10-at-21-40-35.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════
+   SISTEMA DE DISEÑO SaaS 2025 (Portal)
+   ════════════════════════════════════════ */
+:root {
+  /* Brand Gradients & Accents */
+  --primary: #6366F1;
+  --primary-gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  --instagram-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  
+  /* Light Theme */
+  --bg: #F8F9FA;
+  --surface: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  
+  /* UI Elements */
+  --border-subtle: #E2E8F0;
+  --badge-bg: #F1F5F9;
+  --badge-text: #64748B;
+  
+  /* Shadows & Glass */
+  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  
+  /* Animation Curves */
+  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0B0F19;
+    --surface: #111827;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    
+    --border-subtle: #334155;
+    --badge-bg: #1E293B;
+    --badge-text: #94A3B8;
+    
+    --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --glass-bg: rgba(17, 24, 39, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.05);
+  }
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { 
+  font-family: 'Inter', system-ui, sans-serif; 
+  background: var(--bg); 
+  color: var(--text-main); 
+  min-height: 100vh; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: background 0.4s ease, color 0.4s ease;
+  -webkit-font-smoothing: antialiased;
+  /* Fondo radial sutil para el Hero */
+  background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.12) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* ════════════════════════════════════════
+   HERO SECTION
+   ════════════════════════════════════════ */
+.hero {
+  text-align: center;
+  padding: 60px 20px 40px;
+  max-width: 800px;
+  animation: fadeDown 0.8s var(--ease-spring);
+}
+.hero-logo {
+  width: 100px; height: 100px; margin-bottom: 24px; border-radius: 24px; 
+  box-shadow: var(--shadow-md); background: var(--surface); padding: 4px;
+}
+.hero h1 {
+  font-size: 3rem; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 12px;
+  color: var(--text-main); line-height: 1.1;
+}
+.hero p {
+  font-size: 1.1rem; color: var(--text-muted); font-weight: 500; line-height: 1.5;
+  max-width: 500px; margin: 0 auto;
+}
+
+/* ════════════════════════════════════════
+   GRID DE ACCESOS RÁPIDOS
+   ════════════════════════════════════════ */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px; width: 100%; max-width: 1000px; padding: 20px;
+  animation: fadeUp 0.8s var(--ease-spring) 0.1s backwards;
+}
+
+/* Estructura de las Cards */
+.card {
+  background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-subtle); border-radius: 24px; 
+  padding: 32px 24px; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; align-items: flex-start;
+  transition: all 0.4s var(--ease-spring);
+  box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+}
+
+/* Efectos Hover solo para cards activas */
+a.card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Card Deshabilitada (Próximamente) */
+.card.disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Contenido de la Card */
+.card-icon-wrap {
+  width: 56px; height: 56px; border-radius: 16px; 
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; margin-bottom: 20px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.card.calc .card-icon-wrap { background: var(--primary-gradient); color: white; }
+.card.ig .card-icon-wrap { background: var(--instagram-gradient); color: white; }
+
+.card-title {
+  font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;
+}
+.card-desc {
+  font-size: 0.9rem; color: var(--text-muted); font-weight: 500; line-height: 1.5;
+}
+
+/* Badge Minimalista */
+.badge-soon {
+  position: absolute; top: 24px; right: 24px;
+  background: var(--badge-bg); color: var(--badge-text);
+  padding: 6px 12px; border-radius: 100px;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Flecha de redirección sutil */
+.card-arrow {
+  position: absolute; bottom: 32px; right: 24px;
+  color: var(--primary); font-size: 1.2rem;
+  opacity: 0; transform: translateX(-10px);
+  transition: all 0.4s var(--ease-spring);
+}
+a.card:hover .card-arrow {
+  opacity: 1; transform: translateX(0);
+}
+
+/* Footer */
+.footer {
+  margin-top: 60px; padding-bottom: 40px;
+  font-size: 0.85rem; color: var(--text-muted); font-weight: 500; text-align: center;
+}
+
+/* Animaciones */
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+@media(max-width: 640px){
+  .hero h1 { font-size: 2.2rem; }
+  .tools-grid { grid-template-columns: 1fr; }
+  .card { padding: 24px; }
+}
+</style>
+</head>
+<body>
+
+  <header class="hero">
+    <img src="https://i.ibb.co/JjN0BKLC/Whats-App-Image-2025-12-10-at-21-40-35.jpg" alt="CABIOUC Logo" class="hero-logo">
+    <h1>Portal Estudiantil</h1>
+    <p>Herramientas, recursos y calculadoras para organizar tu semestre en Ciencias Biológicas.</p>
+  </header>
+
+  <main class="tools-grid">
+    
+    <a href="calculadora.html" class="card calc">
+      <div class="card-icon-wrap">📊</div>
+      <h2 class="card-title">Calculadora de PPA</h2>
+      <p class="card-desc">Proyecta tus notas, simula escenarios con tu Malla y calcula tu PPA de Licenciatura.</p>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <div class="card disabled">
+      <div class="badge-soon">Próximamente</div>
+      <div class="card-icon-wrap" style="filter: grayscale(100%); opacity: 0.7;">📚</div>
+      <h2 class="card-title">Malla Interactiva</h2>
+      <p class="card-desc">Visualiza prerrequisitos, planifica tus ramos futuros y marca tu progreso visualmente.</p>
+    </div>
+
+    <a href="https://instagram.com/cacbio.uc" target="_blank" rel="noopener noreferrer" class="card ig">
+      <div class="card-icon-wrap">📷</div>
+      <h2 class="card-title">Instagram Oficial</h2>
+      <p class="card-desc">Entérate de fechas clave, asambleas, ayudantías y anuncios de la Consejería Académica.</p>
+      <div class="card-arrow">↗</div>
+    </a>
+
+    <div class="card disabled">
+      <div class="badge-soon">En desarrollo</div>
+      <div class="card-icon-wrap" style="filter: grayscale(100%); opacity: 0.7;">✨</div>
+      <h2 class="card-title">Directorio de Laboratorios</h2>
+      <p class="card-desc">Encuentra opciones para tu OPR, seminario de investigación y contactos de profesores.</p>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    CABIOUC 2026 · Diseñado para estudiantes
+  </footer>
+
+</body>
+</html>
